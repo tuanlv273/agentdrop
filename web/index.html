@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AgentDrop</title>
+<meta name="description" content="On-chain red packets on BNB Chain that only real agents can open: one Agent ID, one share.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect x='10' y='6' width='44' height='52' rx='8' fill='%23d6262f'/><path d='M10 22c12 9 32 9 44 0' stroke='%23f6c343' stroke-width='4' fill='none'/><circle cx='32' cy='28' r='7' fill='%23f6c343'/></svg>">
+<style>
+:root{
+  --bg:#fbf7f2;--surface:#ffffff;--surface-2:#f4ede4;--text:#1d1a17;--muted:#6b6259;--line:#e6ddd2;
+  --red:#c8232c;--red-ink:#ffffff;--gold:#b98200;--ok:#1f7a4d;--warn:#9a5b00;
+  --radius:14px;--shadow:0 1px 2px rgba(0,0,0,.05),0 4px 16px rgba(0,0,0,.05);
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#141210;--surface:#1d1a17;--surface-2:#26221e;--text:#f3ede6;--muted:#a99f94;--line:#332e29;
+  --red:#e0454d;--red-ink:#ffffff;--gold:#f0bf4c;--ok:#4cc38a;--warn:#f0a94c;--shadow:none;}}
+:root[data-theme="dark"]{
+  --bg:#141210;--surface:#1d1a17;--surface-2:#26221e;--text:#f3ede6;--muted:#a99f94;--line:#332e29;
+  --red:#e0454d;--red-ink:#ffffff;--gold:#f0bf4c;--ok:#4cc38a;--warn:#f0a94c;--shadow:none;}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.55 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans",sans-serif}
+a{color:var(--red)}
+code,.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.88em}
+.wrap{max-width:1040px;margin:0 auto;padding:0 16px}
+header.top{display:flex;align-items:center;justify-content:space-between;padding:18px 0}
+.brand{display:flex;gap:10px;align-items:center;font-weight:700;font-size:18px}
+.brand svg{width:28px;height:28px}
+.top nav a{color:var(--muted);text-decoration:none;margin-left:18px;font-size:14px}
+.hero{padding:36px 0 28px}
+.hero h1{font-size:clamp(28px,5vw,46px);line-height:1.1;margin:0 0 14px;letter-spacing:-.02em}
+.hero h1 em{font-style:normal;color:var(--red)}
+.hero p{color:var(--muted);max-width:640px;margin:0 0 22px;font-size:18px}
+.cmd{display:flex;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:10px 10px 10px 14px;max-width:560px;box-shadow:var(--shadow)}
+.cmd code{flex:1;overflow-x:auto;white-space:nowrap}
+button{font:inherit;cursor:pointer;border-radius:10px;border:1px solid var(--line);background:var(--surface-2);color:var(--text);padding:7px 12px;font-size:14px}
+button.primary{background:var(--red);color:var(--red-ink);border-color:var(--red)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:28px 0}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)}
+.stat b{display:block;font-size:28px;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.stat span{color:var(--muted);font-size:13px}
+.stat.hl b{color:var(--ok)}
+h2{font-size:22px;margin:40px 0 14px;letter-spacing:-.01em}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:8px}
+.card .row{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.card .amt{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}
+.pill{font-size:12px;padding:2px 8px;border-radius:999px;background:var(--surface-2);color:var(--muted);white-space:nowrap}
+.pill.code{color:var(--gold)}
+.bar{height:6px;background:var(--surface-2);border-radius:999px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--red)}
+.muted{color:var(--muted);font-size:14px}
+.empty{background:var(--surface);border:1px dashed var(--line);border-radius:var(--radius);padding:22px;color:var(--muted)}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;counter-reset:s}
+.step{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px}
+.step:before{counter-increment:s;content:counter(s);display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--red);color:var(--red-ink);font-weight:700;font-size:14px;margin-bottom:8px}
+.step h3{margin:0 0 6px;font-size:16px}
+.step p{margin:0;color:var(--muted);font-size:14px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+td{padding:8px 6px;border-bottom:1px solid var(--line);vertical-align:top}
+td:first-child{color:var(--muted);width:34%}
+.trust{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:8px 14px}
+footer{margin:48px 0 32px;color:var(--muted);font-size:13px;border-top:1px solid var(--line);padding-top:18px}
+.warn{color:var(--warn)}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:8px 14px;border-radius:10px;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.on{opacity:1}
+td a.mono{word-break:break-all}
+@media (max-width:720px){.stats{grid-template-columns:repeat(2,1fr)}.steps{grid-template-columns:1fr}.top nav{display:none}
+  .trust table,.trust tbody,.trust tr,.trust td{display:block;width:auto}.trust td:first-child{width:auto;padding-bottom:0;border:0}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <svg viewBox="0 0 64 64" aria-hidden="true"><rect x="10" y="6" width="44" height="52" rx="8" fill="var(--red)"/><path d="M10 22c12 9 32 9 44 0" stroke="#f6c343" stroke-width="4" fill="none"/><circle cx="32" cy="28" r="7" fill="#f6c343"/></svg>
+      AgentDrop
+    </div>
+    <nav><a href="#packets">Packets</a><a href="#how">How it works</a><a href="#trust">Contract</a><a href="https://github.com/tuanlv273/agentdrop" id="gh">GitHub</a></nav>
+  </header>
+
+  <section class="hero">
+    <h1>Red packets only <em>real agents</em> can open.</h1>
+    <p>Anyone can drop BNB or a BEP-20 token on BNB Chain. Only wallets holding an <b>Agent ID</b> (one per person, non-transferable) can open it — once each. Every share reaches a different real person, never a farm of cloned wallets.</p>
+    <div class="cmd"><code id="hero-cmd">Open AgentDrop code …</code><button class="primary" data-copy="#hero-cmd">Copy for my agent</button></div>
+  </section>
+
+  <section class="stats" aria-live="polite">
+    <div class="stat hl"><b id="s-people">–</b><span>real people opened a packet</span></div>
+    <div class="stat"><b id="s-opens">–</b><span>packets opened</span></div>
+    <div class="stat"><b id="s-packets">–</b><span>packets created</span></div>
+    <div class="stat"><b id="s-clones">0</b><span>cloned wallets — by design</span></div>
+  </section>
+
+  <h2 id="packets">Open packets</h2>
+  <div id="list" class="grid"><div class="empty">Loading from BNB Chain…</div></div>
+  <p class="muted" id="sync"></p>
+
+  <h2 id="how">How it works</h2>
+  <div class="steps">
+    <div class="step"><h3>Get an Agent ID</h3><p>Binance App → Wallet → Agent ID banner. Free apart from a tiny network fee. One per person.</p></div>
+    <div class="step"><h3>Turn on Developer Mode</h3><p>Agentic Wallet → Settings → Developer Mode → confirm. Lets your agent prepare contract calls; you still confirm each one.</p></div>
+    <div class="step"><h3>Ask your agent</h3><p>Install the <code>agentdrop</code> skill next to <code>binance-agentic-wallet</code>, then say <i>“open AgentDrop code XXXX”</i> or <i>“send a lucky packet of 0.01 BNB to 20 agents”</i>.</p></div>
+  </div>
+
+  <h2 id="trust">Contract &amp; safety</h2>
+  <div class="trust">
+    <table>
+      <tr><td>AgentDrop</td><td><a class="mono" id="c-drop" target="_blank" rel="noopener"></a> · verified source</td></tr>
+      <tr><td>Agent ID (SPACE ID)</td><td><a class="mono" id="c-aid" target="_blank" rel="noopener"></a></td></tr>
+      <tr><td>Owner / admin</td><td><b>None.</b> No owner, no fee, no upgrade, no pause.</td></tr>
+      <tr><td>Who can move funds</td><td>Each packet lives in its own vault. Funds only go to openers (their share) or, after expiry, back to the creator.</td></tr>
+      <tr><td>Approvals</td><td>Exact amount only — never unlimited.</td></tr>
+      <tr><td>Your keys</td><td>This page never connects a wallet and never asks for keys, seed phrases or codes. Your agent prepares the call; you confirm it in your own wallet.</td></tr>
+    </table>
+  </div>
+
+  <footer>
+    <p class="warn">AgentDrop is a gifting tool, not an investment. Packets have no guaranteed value; tokens in packets created by others may be worthless. Never send funds to anyone claiming to “unlock” a packet.</p>
+    <p>Built for the BNB Chain × Binance Wallet Agent ID Hackathon. Open source. Data is read directly from BNB Chain.</p>
+  </footer>
+</div>
+<div class="toast" id="toast">Copied</div>
+<script src="app.js" type="module"></script>
+</body>
+</html>
