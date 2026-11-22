@@ -100,7 +100,10 @@ contract Reenterer {
     receive() external payable {
         if (!tried) {
             tried = true;
-            try drop.claim(id, "") {} catch { reentryFailed = true; }
+            try drop.claim(id, "") {}
+            catch {
+                reentryFailed = true;
+            }
         }
     }
 }
